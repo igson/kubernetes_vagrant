@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
         v.memory = 1024
         v.cpus = 2
     end
-      
+
     config.vm.define "k8s-master" do |master|
         master.vm.box = IMAGE_NAME
         master.vm.network "private_network", ip: "192.168.50.10"
@@ -25,6 +25,7 @@ Vagrant.configure("2") do |config|
             vb.name = "k8s-master"
             vb.customize ["modifyvm", :id, "--groups", "/k8s-nodes"]
         end
+        master.vm.provision "shell", path: "scripts/setup_ssh.sh"
     end
 
     (1..N).each do |i|
@@ -44,6 +45,9 @@ Vagrant.configure("2") do |config|
                 vb.name = "node-#{i}"
                 vb.customize ["modifyvm", :id, "--groups", "/k8s-nodes"]
             end
+            node.vm.provision "shell", path: "scripts/setup_ssh.sh"
+            node.vm.provision "shell", inline: "source <(kubectl completion bash)"
+            node.vm.provision "shell", inline: "echo \"source <(kubectl completion bash)\" >> ~/.bashrc"
         end
     end
 end
